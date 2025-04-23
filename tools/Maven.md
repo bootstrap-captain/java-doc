@@ -290,3 +290,78 @@ mvn clean install
 - 两个jar包中的类分别实现了同一个接口，但是因为没有注意命名规范，两个不同的类刚好是同一个名字
 ```
 
+### 仲裁机制
+
+- Maven提供了对应的仲裁机制，决定项目到底使用哪个对应的jar的版本
+
+#### 最短路径
+
+- 依赖中的相同的GAV，资源层级越深，优先级越低
+- 最终会使用lombok2.0
+
+![image-20250423122801516](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423122801516.png)
+
+#### 路径相同，声明优先
+
+- A和B，在MyProject中先声明哪个，则哪个优先
+- 在MyProject的pom中，先声明A，则选用A的lombok1.0
+
+![image-20250423123056853](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423123056853.png)
+
+#### 覆盖优先
+
+- 在MyProject中，配置了一个jar的不同版本，后配置的覆盖前配置的
+
+![image-20250423125851952](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423125851952.png)
+
+### 手动指定
+
+- 经过maven仲裁后，会选定一个版本
+- 但是在项目运行时，希望能够不使用maven的仲裁版本，而是手动指定一个版本
+
+```bash
+# JVM在加载一个jar包的时候，如果加载了其中一个jar包，则其他版本的该jar，就不会再次被加载
+
+# 场景一：低版本漏洞
+- 需要手动指定一个高版本的
+
+# 场景二：高版本太新
+- 高版本中可能删除了某个类，但是导致某个第三方包运行不起来，因此需要手动指定到低版本
+```
+
+#### exclude
+
+- 可以借助Maven helper插件来快速排除某个依赖，从而使该包脱离仲裁体系
+
+![image-20250423130719023](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423130719023.png)
+
+#### 版本锁定-DM
+
+- 如果某个包被很多个框架引入，那么在exclude时，需要一个个排除，比较麻烦
+- 版本锁定会脱离maven仲裁机制，优先级别最高
+- 也可以在父工程中控制版本锁定
+- 如果父项目和子项目同时进行了版本锁定，子项目优先级最高
+
+![image-20250423131242863](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423131242863.png)
+
+- DM的优先级低于直接写明依赖
+
+![image-20250423131844440](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423131844440.png)
+
+#### 依赖隐藏-optional
+
+- B项目可以隐藏自己的依赖，不传递给A项目，不传递该依赖
+- 默认为false，true代表可以传递
+- 被依赖方解决依赖冲突
+
+```xml
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.36</version>
+    <optional>true</optional>
+</dependency>
+```
+
+# 父子项目
+
