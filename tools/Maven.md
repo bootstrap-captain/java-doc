@@ -176,7 +176,7 @@ The goal you specified requires a project to execute but there is no pom in this
 
 ```bash
 # mvn clean
-- 删除target目录
+- 删除target目录,删除本地install的jar包
 
 # mvn compile
 - 将src下面的main/test从 .java文件编译成 .class文件
@@ -235,10 +235,58 @@ mvn clean install
 - 所有的pom.xml如果没有父pom，则都会使用maven本身提供的super pom，类似与Java的Object类
 - 超级pom路径： apache-maven-3.9.9/lib/maven-model-builder-3.9.9.jar/   org/apache/maven/model/pom-4.0.0.xml
 
-```xml
-
-```
-
 ### Effective Pom
 
 - 一个项目的pom.xml，经过超级pom，父pom，当前pom，根据一定的优先级组合后，形成的最终的pom
+
+# 依赖管理
+
+## scope
+
+- 默认的jar包依赖，为compile级别，在任何地方都可以使用，可以通过scope标签来设定其作用范围
+
+| scope            | 主代码 | 测试代码 | 打包包含该jar包                       | 示例                |
+| ---------------- | ------ | -------- | ------------------------------------- | ------------------- |
+| complie(default) | Y      | Y        | Y                                     | log4j               |
+| test             | N      | Y        | N(测试依赖的jar包不进入最终项目jar包) | junit               |
+| provided         | Y      | Y        | N                                     | servant-api, lombok |
+| import           |        |          |                                       | 解决依赖单继承问题  |
+
+```bash
+# provided：
+- 场景一：开发时需要用该jar包，但是部署时，服务器已经有了，所以打包的时候不能带，不然可能冲突，比如jakarta.servlet-api
+- 场景二：开发时的注解，然后编译时进行动态生成好的 .class文件。     jar运行时候已经不需要该依赖了，比如 lombok
+```
+
+## 依赖传递
+
+### 本地项目
+
+- 本地的多个项目(不管是不是父子项目), A项目依赖B项目时，B项目的包可传递到A项目中
+- IDEA中不install时，编译不会出现问题
+- A项目在package时候，就会去找对应的B项目的包，所以B项目必须先install或者deploy才可以保证B项目的jar存在
+
+![image-20250423111511484](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423111511484.png)
+
+### 仅传递compile
+
+- B项目中依赖的第三方包，只有compile级别的，才会打包到B项目中，才会传递到A项目中
+- B项目中的所有的源代码，会全部传递到A项目中
+
+## version conflict
+
+- 一个项目中使用了同一个jar包的不同版本，导致冲突
+
+```bash
+# 抛异常
+- java.lang.ClassNotFoundException:   编译过程找不到类
+- java.lang.NoClassDefFoundError：    运行过程找不到类
+- java.lang.LinkageError:             不同类加载器分别加载的多个类有相同的全限定类名
+
+# 抛异常
+- java.lang.NoSuchMethodError:  程序找不到预期的方法，多见于通过反射调用方法
+
+# 没报错但结果不对
+- 两个jar包中的类分别实现了同一个接口，但是因为没有注意命名规范，两个不同的类刚好是同一个名字
+```
+
