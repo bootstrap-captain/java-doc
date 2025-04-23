@@ -365,3 +365,80 @@ mvn clean install
 
 # 父子项目
 
+## 单继承-parent
+
+- 子项目的V和G如果和父项目线通，可省略
+- 父项目V一处修改，子项目处处生效。子可单独定义V，优先级比父高
+- 子无需定义V，只需GA信息，再通过版本仲裁机制确定引入的深层依赖的V
+- 父项目必须为pom，不写业务代码，仅仅提供依赖版本控制
+- 父项目的properties也可以继承
+
+### 自定义父
+
+- 打包的时候，只需要在父工程一键package即可
+
+![image-20250423212335073](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423212335073.png)
+
+### 第三方父
+
+- 仅仅提供依赖管理，不能提供一键package对应的build功能
+
+![image-20250423214034680](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423214034680.png)
+
+## 多继承-import
+
+- 如果项目依赖到多个parent，可以使用DM进行多个import
+
+![image-20250423215358590](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423215358590.png)
+
+![image-20250423215414270](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423215414270.png)
+
+## 标签属性
+
+- 标签属性： 可以在父工程中定义，也可以在子工程中定义
+- 标签在引用时候，只能存在于子父工程，不能存在于通过DependencyManagement来使用
+
+# Build
+
+## fileName
+
+- 默认打包后的文件名 A-V.jar
+- 可以通过该属性进行个性化名字
+
+## 微服务打包
+
+- maven的直接打包，不能生成直接可以运行的微服务jar包
+
+```bash
+# 微服务jar包
+- 当前微服务本身jar包
+- 当前微服务所依赖的jar包
+- 内置可以直接运行的tomcat
+- jar包可以通过 java -jar方式直接启动
+
+# 添加对应的plugin，最终会生成两个jar
+erick-customization.jar                # fat jar，即可以直接运行的jar
+erick-customization.jar.original       # 去掉 .original, 就是maven默认的打包后的jar
+```
+
+```xml
+    <build>
+        <plugins>
+            <!--如果不加该插件，则只包含当前服务的代码-->
+
+            <!--满足微服务打包的插件
+            版本信息： 1. 如果parent是springboot的版本，则不配置可以直接使用
+                      2. 也可以自定义
+                      3. 不能直接通过DM来进行传递，只能通过parent来传递-->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+
+        <!--自定义打包后的名字: erick-customization.jar -->
+        <finalName>erick-customization</finalName>
+    </build>
+```
+
+![image-20250423220552684](https://skillset.oss-cn-shanghai.aliyuncs.com/image-20250423220552684.png)
